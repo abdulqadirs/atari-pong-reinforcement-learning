@@ -1,11 +1,7 @@
-from collections import namedtuple
 import logging
 import random
 
 logger = logging.getLogger('pong')
-
-Experience = namedtuple('Experience',('state', 'action', 'reward', 'next_state'))
-e = Experience(1, 2 , 3, 4)
 
 class ReplayMemory():
     """

@@ -1,5 +1,6 @@
 import configparser
 import logging
+import torch
 
 from config import Config
 
@@ -36,6 +37,9 @@ def reading_config(file_path):
     Config.set("episodes", config.getint("training", "episodes", fallback=1000))
     Config.set("gamma", config.getfloat("training", "gamma", fallback=0.99))
     Config.set("learning_rate", config.getfloat("training", "learning_rate", fallback=0.01))
+    Config.set("epsilon_start", config.getfloat("training", "epsilon_start", fallback=0.9))
+    Config.set("epsilon_end", config.getfloat("training", "epsilon_end", fallback=0.05))
+    Config.set("epsilon_decay", config.getfloat("training", "epsilon_decay", fallback=200))
 
     #logging
     Config.set("logfile", config.get("logging", "logfile", fallback="output.log"))

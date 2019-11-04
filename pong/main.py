@@ -1,3 +1,5 @@
+from collections import namedtuple
+
 from environment import make_env
 from policies.resnet_policy import Resnet18
 
@@ -15,6 +17,8 @@ actions = resnet.forward(state)
 print("actions: ", actions)
 
 
+Experience = namedtuple('Experience',('state', 'action', 'reward', 'next_state'))
+e = Experience(1, 2 , 3, 4)
 
 #print(env.action_space.n)
 #print(env.unwrapped.get_action_meanings())
