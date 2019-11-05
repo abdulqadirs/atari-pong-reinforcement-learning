@@ -31,6 +31,15 @@ def reading_config(file_path):
     else:
         Config.set("device", "cpu")
         logger.info('Only CPU is available')
+    
+    #environment
+    Config.set("env_name", config.get("environment", "env_name", fallback = 'PongNoFrameskip-v4'))
+
+    #policy
+    Config.set("feature_extraction", config.getboolean("policy", "feature_extraction", fallback = True))
+
+    #replay memory
+    Config.get("memory_size", config.getint("replay_memory", "total_size", fallback=1000))
 
     #Training
     Config.set("training_batch_size", config.getint("training", "batch_size", fallback=32))
@@ -43,3 +52,6 @@ def reading_config(file_path):
 
     #logging
     Config.set("logfile", config.get("logging", "logfile", fallback="output.log"))
+
+    #paths 
+    Config.set("output_dir", config.get("paths", "output_dir", fallback = "output"))

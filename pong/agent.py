@@ -14,7 +14,7 @@ class Agent():
         self.n_actions = n_actions
         self.step = 0
     
-    def action(self, state, exploration_rate):
+    def select_action(self, state, exploration_rate):
         """
         Selects an action by exploration or exploitation.
 
@@ -27,4 +27,4 @@ class Agent():
             return torch.tensor([[random.randrange(self.n_actions)]])
         else:
             with torch.no_grad():
-                return self.policy(state)
+                return self.policy.forward(state).max(1)[1].view(-1, 1)
