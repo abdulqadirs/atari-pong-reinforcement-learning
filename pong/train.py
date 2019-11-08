@@ -1,3 +1,6 @@
+#taken from pytorch Reinforcement Learning (DQN) tutorial
+#https://pytorch.org/tutorials/intermediate/reinforcement_q_learning.html
+
 from collections import namedtuple
 import logging
 from pathlib import Path
@@ -25,7 +28,7 @@ def main():
     output_dir.mkdir(parents=True, exist_ok=True)
 
     #setup logging
-    logfile_path = Path(output_dir / Config.get('logfile'))
+    logfile_path = Path(output_dir / "output.log")
     setup_logging(logfile=logfile_path)
 
     #read config file
@@ -33,8 +36,8 @@ def main():
     reading_config(config_file)
 
     #environment
-    env_name = Config.get("env_name")
-    env = make_env(env_name)
+    #env_name = Config.get("env_name")
+    env = make_env('PongNoFrameskip-v4')
 
     #configs
     batch_size = Config.get("training_batch_size")
@@ -47,6 +50,7 @@ def main():
     feature_extraction = Config.get("feature_extraction")
     n_actions = env.action_space.n
     device = Config.get("device")
+    target_update = Config.get("target_update")
 
     #policy network
     policy_network = Resnet18(n_actions, feature_extraction).to(device)
@@ -54,7 +58,7 @@ def main():
     target_network = Resnet18(n_actions, feature_extraction).to(device)
     #initializing the weights of target network
     target_network.load_state_dict(policy_network.state_dict())
-    #freezing the target network
+    #freezing the target network's weights
     target_network.eval()
 
     #optimizer
@@ -74,12 +78,14 @@ def main():
     for episode in range(episodes):
         state = env.reset()
         exploration_rate = get_exploration_rate(epsilon_start, epsilon_end, epsilon_decay, episode)
+        print("episode: ", episode)
         for timestep in count():
             # obs = env.render(mode = 'rgb_array')
             action = agent.select_action(state, exploration_rate).to(device)
             observation, reward, done, info = env.step(action.item())
             reward = torch.tensor([reward], device = device)
-
+            
+            #storing the difference of states in the memory.
             old_state = state
             new_state = observation
             if not done:
@@ -88,13 +94,67 @@ def main():
                 next_state = None
             experience = Experience(state, action, reward, next_state)
             memory.push(experience)
+            exp1 = Experience(state, action, reward, None)
+            memory.push(exp1)
             state = next_state
 
             #sampling from the memory
-            batch = memory.sample(batch_size)
-            batch = Experience(*zip(*batch))
-            state_batch = torch.cat(batch.state, 0)
-            action_batch = torch.cat(batch.action, 0)
-            reward_batch = torch.cat(batch.reward, 0)
+            current_memory_size = memory.get_size()
+            if current_memory_size >= batch_size:
+                print("Memory size >= batch size. ", current_memory_size)
+                batch = memory.sample(batch_size)
+                batch = Experience(*zip(*batch))
 
-            state_action_values = policy_network(state_batch).gather(1, action_batch)
+                #final state: last state of an episode.
+                #creates a mask (list of booleans) of 'next_states' i.e [False, True, True, False, True]
+                #False/0 means that the corresponding 'next_state' of batch is final state of episode.
+                #True/1 means that thae corresponding 'next_state' of batch is not final state of episode.
+                non_final_mask = torch.tensor(tuple(map(lambda s: s is not None, batch.next_state)), dtype=torch.bool)
+                #concatenating the non final 'next_states'
+                non_final_next_states = torch.cat([s for s in batch.next_state if s is not None])
+
+                state_batch = torch.cat(batch.state, 0)
+                action_batch = torch.cat(batch.action, 0)
+                reward_batch = torch.cat(batch.reward, 0)
+
+                #policy network: calculates the q_values for the given batch of states
+                #actions_batch: actions taken by agent for the given batch in the past.
+                #gather(): selects the q_values of actions that would've been taken using actions_batch
+                state_action_values = policy_network(state_batch).gather(1, action_batch)
+
+                #masking  q_values of the final 'next_state' with zeros 
+                next_state_values = torch.zeros(batch_size, device=device)
+                next_state_values[non_final_mask] = target_network(non_final_next_states).max(1)[0].detach()
+
+                #expected q value = reward + (gamma * next_q_values) 
+                expected_state_action_values = reward_batch + (next_state_values * gamma)
+                expected_state_action_values = expected_state_action_values.unsqueeze(1)
+            
+                #loss
+                loss = criterion(state_action_values, expected_state_action_values)
+
+                #optimization
+                optimizer.zero_grad()
+                loss.backward()
+                for param in policy_network.parameters():
+                    if param.grad is not None:
+                        param.grad.data.clamp_(-1, 1)
+                optimizer.step()
+
+                print("mask: ", non_final_mask)
+                print("next state values without mask: ", next)
+                print("next state values: ", next_state_values)
+                print("expected q values: ", expected_state_action_values)
+                print("state action values: ", state_action_values)
+                print("loss: ", loss)
+                break
+
+            if done:
+                logger.info("Episode {} completed.".format(episode))
+                break
+            #updating the weights of target network
+            if episode % target_update == 0:
+                target_network.load_state_dict(policy_network.state_dict())
+
+if __name__ == "__main__":
+    main()

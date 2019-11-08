@@ -1,5 +1,8 @@
 import random
 import torch
+import logging
+
+logger = logging.getLogger("pong")
 
 class Agent():
     """
@@ -20,11 +23,13 @@ class Agent():
 
         Args:
             state (tensor): Batch of images sampled from replay memory.
-            exploration_rate (float): Rate of exploration
+            exploration_rate (float): Rate of exploration.
         """
         self.step += 1
         if exploration_rate < random.random():
             return torch.tensor([[random.randrange(self.n_actions)]])
         else:
             with torch.no_grad():
-                return self.policy.forward(state).max(1)[1].view(-1, 1)
+                actions = self.policy.forward(state).max(1)[1].view(-1, 1) 
+                logger.info("Agents action shape: {}".format(actions.shape))
+                return actions

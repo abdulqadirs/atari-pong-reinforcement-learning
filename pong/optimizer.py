@@ -4,8 +4,7 @@ def adam_optimizer(policy_net, learning_rate):
     """
     Returns the Adam Optimizer.
     Args:
-        encoder (object): Image encoder (CNN).
-        decoder (object): Image decoder (LSTM).
+        policy_net (object): CNN to convert state to action.
         learning_rate (float): Step size of optimizer.
     
     Returns:

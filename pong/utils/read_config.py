@@ -38,12 +38,14 @@ def reading_config(file_path):
     #policy
     Config.set("feature_extraction", config.getboolean("policy", "feature_extraction", fallback = True))
 
+    #target network
+    Config.set("target_update", config.getint("target_network", "update_weights", fallback=10))
     #replay memory
-    Config.get("memory_size", config.getint("replay_memory", "total_size", fallback=1000))
+    Config.set("memory_size", config.getint("replay_memory", "total_size", fallback=100))
 
     #Training
-    Config.set("training_batch_size", config.getint("training", "batch_size", fallback=32))
-    Config.set("episodes", config.getint("training", "episodes", fallback=1000))
+    Config.set("training_batch_size", config.getint("training", "batch_size", fallback=8))
+    Config.set("episodes", config.getint("training", "episodes", fallback=10))
     Config.set("gamma", config.getfloat("training", "gamma", fallback=0.99))
     Config.set("learning_rate", config.getfloat("training", "learning_rate", fallback=0.01))
     Config.set("epsilon_start", config.getfloat("training", "epsilon_start", fallback=0.9))
