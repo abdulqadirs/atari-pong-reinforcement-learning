@@ -24,7 +24,7 @@ logger = logging.getLogger('pong')
 def main():
 
      #output directory
-    output_dir = Path('output')
+    output_dir = Path("output")
     output_dir.mkdir(parents=True, exist_ok=True)
 
     #setup logging
@@ -36,8 +36,8 @@ def main():
     reading_config(config_file)
 
     #environment
-    #env_name = Config.get("env_name")
-    env = make_env('PongNoFrameskip-v4')
+    env_name = Config.get("env_name")
+    env = make_env(env_name)
 
     #configs
     batch_size = Config.get("training_batch_size")
@@ -75,33 +75,43 @@ def main():
     memory_size = Config.get("memory_size")
     memory = ReplayMemory(memory_size)
 
-    for episode in range(episodes):
+    #loading the checkpoint
+    checkpoint_file = Path(output_dir / Config.get("checkpoint_file"))
+    checkpoint_pong = load_checkpoint(checkpoint_file)
+    start_episode = 1
+    if checkpoint_pong is not None:
+        start_episode = checkpoint_pong['episode'] + 1
+        policy_network.load_state_dict(checkpoint_pong['policy_net'])
+        optimizer.load_state_dict(checkpoint_pong['optimizer'])
+    del checkpoint_pong
+
+    for episode in range(start_episode, episodes + 1):
         state = env.reset()
         exploration_rate = get_exploration_rate(epsilon_start, epsilon_end, epsilon_decay, episode)
-        print("episode: ", episode)
+        print("Episode: ", episode)
+        logger.info("Episode: {}".format(episode))
         for timestep in count():
             # obs = env.render(mode = 'rgb_array')
+            state = state.to(device)
             action = agent.select_action(state, exploration_rate).to(device)
             observation, reward, done, info = env.step(action.item())
             reward = torch.tensor([reward], device = device)
             
             #storing the difference of states in the memory.
             old_state = state
-            new_state = observation
+            new_state = observation.to(device)
             if not done:
-                next_state = new_state - old_state
+                next_state = (new_state - old_state).to(device)
             else:
                 next_state = None
+
             experience = Experience(state, action, reward, next_state)
             memory.push(experience)
-            exp1 = Experience(state, action, reward, None)
-            memory.push(exp1)
-            state = next_state
+            state = next_state.to(device)
 
             #sampling from the memory
             current_memory_size = memory.get_size()
             if current_memory_size >= batch_size:
-                print("Memory size >= batch size. ", current_memory_size)
                 batch = memory.sample(batch_size)
                 batch = Experience(*zip(*batch))
 
@@ -141,20 +151,19 @@ def main():
                         param.grad.data.clamp_(-1, 1)
                 optimizer.step()
 
-                print("mask: ", non_final_mask)
-                print("next state values without mask: ", next)
-                print("next state values: ", next_state_values)
-                print("expected q values: ", expected_state_action_values)
-                print("state action values: ", state_action_values)
-                print("loss: ", loss)
-                break
-
             if done:
                 logger.info("Episode {} completed.".format(episode))
                 break
-            #updating the weights of target network
-            if episode % target_update == 0:
-                target_network.load_state_dict(policy_network.state_dict())
+        #updating the weights of target network
+        #saving the checkpoint of policy network
+        if episode % target_update == 0:
+            target_network.load_state_dict(policy_network.state_dict())
+            save_checkpoint(episode = episode,
+                            outdir = output_dir,
+                            policy_net = policy_network,
+                            optimizer = optimizer,
+                            criterion = criterion)
+        
 
 if __name__ == "__main__":
     main()

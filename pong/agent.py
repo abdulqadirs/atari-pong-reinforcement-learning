@@ -1,6 +1,7 @@
 import random
 import torch
 import logging
+from config import Config
 
 logger = logging.getLogger("pong")
 

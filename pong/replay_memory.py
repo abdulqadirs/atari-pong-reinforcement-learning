@@ -1,5 +1,6 @@
 import logging
 import random
+from config import Config
 
 logger = logging.getLogger('pong')
 
@@ -49,6 +50,6 @@ class ReplayMemory():
             IndexError: If the size of memory is less than batch size.
         """
         try:
-            return random.sample(self.memory, batch_size)
+            return random.sample(self.memory, batch_size).to(Config.get("device"))
         except IndexError:
             logger.exception('Batch size is greater than the size of memory.')

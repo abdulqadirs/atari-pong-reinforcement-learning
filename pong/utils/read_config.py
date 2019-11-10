@@ -56,4 +56,5 @@ def reading_config(file_path):
     Config.set("logfile", config.get("logging", "logfile", fallback="output.log"))
 
     #paths 
-    Config.set("output_dir", config.get("paths", "output_dir", fallback = "output"))
+    #Config.set("output_dir", config.get("paths", "output_dir", fallback = "output"))
+    Config.set("checkpoint_file", config.get("paths", "checkpoint_file", fallback = "checkpoint.pong.pth.tar"))
