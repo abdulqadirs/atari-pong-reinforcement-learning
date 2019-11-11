@@ -50,6 +50,6 @@ class ReplayMemory():
             IndexError: If the size of memory is less than batch size.
         """
         try:
-            return random.sample(self.memory, batch_size).to(Config.get("device"))
+            return random.sample(self.memory, batch_size)
         except IndexError:
             logger.exception('Batch size is greater than the size of memory.')
