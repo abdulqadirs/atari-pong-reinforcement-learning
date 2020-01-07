@@ -9,6 +9,7 @@ from utils.read_config import reading_config
 from utils.setup_logging import setup_logging
 from environment import make_env
 from policies.resnet_policy import Resnet18
+from policies.alexnet_policy import Alexnet
 from agent import Agent
 from replay_memory import ReplayMemory
 from config import Config
@@ -21,8 +22,8 @@ logger = logging.getLogger('pong')
 def main():
 
     #output directory
-    output_dir = Path('/content/drive/My Drive/atari-pong-reinforcement-learning/output')
-    #output_dir = Path("../output")
+    #output_dir = Path('/content/drive/My Drive/atari-pong-reinforcement-learning/output')
+    output_dir = Path("../output")
     output_dir.mkdir(parents=True, exist_ok=True)
 
     #setup logging
@@ -30,8 +31,8 @@ def main():
     setup_logging(logfile=logfile_path)
 
     #read config file
-    config_file = Path('/content/drive/My Drive/atari-pong-reinforcement-learning/config.ini')
-    #config_file = Path("../config.ini")
+    #config_file = Path('/content/drive/My Drive/atari-pong-reinforcement-learning/config.ini')
+    config_file = Path("../config.ini")
     reading_config(config_file)
 
     #environment
@@ -52,9 +53,11 @@ def main():
     target_update = Config.get("target_update")
 
     #policy network
-    policy_network = Resnet18(n_actions, feature_extraction).to(device)
+    #policy_network = Resnet18(n_actions, feature_extraction).to(device)
+    policy_network = Alexnet(n_actions, feature_extraction).to(device)
     #target network
-    target_network = Resnet18(n_actions, feature_extraction).to(device)
+    # target_network = Resnet18(n_actions, feature_extraction).to(device)
+    target_network = Alexnet(n_actions, feature_extraction).to(device)
     #initializing the weights of target network
     target_network.load_state_dict(policy_network.state_dict())
     #freezing the target network's weights
@@ -88,8 +91,8 @@ def main():
     model = Pong(env, policy_network, target_network, agent, optimizer, criterion, memory, output_dir)
 
     #training
-    model.train(episodes, target_update, start_episode, batch_size, epsilon_start, epsilon_end, epsilon_decay, gamma)
-
+    #model.train(episodes, target_update, start_episode, batch_size, epsilon_start, epsilon_end, epsilon_decay, gamma)
+    model.evalutate()
 
 
 if __name__ == "__main__":

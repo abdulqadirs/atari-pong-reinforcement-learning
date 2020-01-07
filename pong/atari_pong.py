@@ -54,7 +54,7 @@ class Pong:
             epsilon_decay (float):
             gamma (float):
         """ 
-        
+        print(start_episode)
         for episode in range(start_episode, episodes + 1):
             state = self.environment.reset()
             exploration_rate = get_exploration_rate(epsilon_start, epsilon_end, epsilon_decay, episode)
@@ -143,21 +143,21 @@ class Pong:
         Runs the model using pretrained embedding in evaluation mode.
         """
         state = self.environment.reset()
-        for i in range(100):
+        for i in range(1000):
             self.environment.render()
             action = self.policy_network.forward(state).max(1)[1].view(-1, 1).to(self.device)
             observation, reward, done, info = self.environment.step(action.item())
+            state = observation.to(self.device)
+            # old_state = state
+            # new_state = observation.to(self.device)
+            # if not done:
+            #     next_state = (new_state - old_state).to(self.device)
+            # else:
+            #     next_state = None
             
-            old_state = state
-            new_state = observation.to(self.device)
-            if not done:
-                next_state = (new_state - old_state).to(self.device)
-            else:
-                next_state = None
-            
-            if next_state is not None:
-                state = next_state.to(self.device)
-
+            # if next_state is not None:
+            #     state = next_state.to(self.device)
+            print(reward)
             if done:
                 state = self.environment.reset()
         self.environment.close()

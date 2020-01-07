@@ -53,7 +53,7 @@ class MaxAndSkipEnv(gym.Wrapper):
         return max_frame, total_reward, done, info
 
 class WarpFrame(gym.ObservationWrapper):
-    def __init__(self, env, width=224, height=220, grayscale=False):
+    def __init__(self, env, width=224, height=224, grayscale=False):
         """
         Warp frames to 84x84 and converts to pytorh tensor
         """

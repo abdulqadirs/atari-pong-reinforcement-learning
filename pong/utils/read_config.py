@@ -36,7 +36,7 @@ def reading_config(file_path):
     Config.set("env_name", config.get("environment", "env_name", fallback = 'PongNoFrameskip-v4'))
 
     #policy
-    Config.set("feature_extraction", config.getboolean("policy", "feature_extraction", fallback = True))
+    Config.set("feature_extraction", config.getboolean("policy", "feature_extraction", fallback = False))
 
     #target network
     Config.set("target_update", config.getint("target_network", "update_weights", fallback=10))
@@ -46,7 +46,7 @@ def reading_config(file_path):
     #Training
     Config.set("training_batch_size", config.getint("training", "batch_size", fallback=32))
     Config.set("episodes", config.getint("training", "episodes", fallback=1000))
-    Config.set("gamma", config.getfloat("training", "gamma", fallback=0.99))
+    Config.set("gamma", config.getfloat("training", "gamma", fallback=0.75))
     Config.set("learning_rate", config.getfloat("training", "learning_rate", fallback=0.01))
     Config.set("epsilon_start", config.getfloat("training", "epsilon_start", fallback=0.9))
     Config.set("epsilon_end", config.getfloat("training", "epsilon_end", fallback=0.05))
